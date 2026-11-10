@@ -2,6 +2,8 @@
 
 Standalone Jellyfin administrator dashboard for NVDEC/NVENC video conversion, compatibility indexing, and validated replacement of media files.
 
+**Release direction, 11 November 2026:** ship standalone Remuxify with no plugin dependency. The plugin preview below is parked historical work. Follow [the standalone release checklist](TOMORROW_CHECKLIST.md) for the active plan; the live plugin-mode deployment has not yet been reverted.
+
 The standalone baseline is preserved on `main`. The `feature/jellyfin-plugin` branch adds a **development-preview native plugin**, with separate Jellyfin 10.11.8 and 12.4 builds and the existing Python worker. Read [the migration guide](docs/PLUGIN_MIGRATION.md) before testing or installing it. The existing 10.11.8 deployment has been paired with the plugin after a user-approved, backed-up worker cutover. Its existing task and data directory remain in use; wider acceptance testing is still pending.
 
 ## Features
