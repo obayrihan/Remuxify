@@ -1,5 +1,6 @@
 {
   "jellyfin_url": "http://127.0.0.1:8096",
+  "integration_mode": "standalone",
   "jellyfin_data": "C:/ProgramData/Jellyfin/Server",
   "public_url": "https://jellyfin.example.com/forge/",
   "ffmpeg": "C:\\Program Files\\Jellyfin\\Server\\ffmpeg.exe",

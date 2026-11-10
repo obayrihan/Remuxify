@@ -21,6 +21,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from core import BASE, DATA, Config, Inventory, Jellyfin, Resources, Store, matching_rules
 from worker import Worker
 from qbittorrent import TorrentCoordinator, TorrentHold
+from plugin_bridge import authorized as service_authorized
 
 config = Config()
 store = Store()
@@ -70,6 +71,8 @@ def allowed_origin(origin, bridge=False):
 
 @app.middleware('http')
 async def security(request: Request, call_next):
+    if config.get()['integration_mode'] == 'plugin' and request.url.path in ('/forge/api/login', '/forge/auth/bridge', '/forge/api/logout'):
+        return JSONResponse({'detail': 'Use the Remuxify plugin in Jellyfin'}, status_code=404)
     if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
         is_bridge = request.url.path == '/forge/auth/bridge'
         origin = request.headers.get('origin')
@@ -106,6 +109,10 @@ def check_admin(token):
 
 
 def admin(request: Request):
+    if config.get()['integration_mode'] == 'plugin':
+        if not service_authorized(config.get(), request.headers.get('authorization', ''), request.client.host if request.client else ''):
+            raise HTTPException(401, 'A paired local Jellyfin plugin connection is required')
+        return {'name': 'Jellyfin administrator'}
     cookie = request.cookies.get('forge_session', '')
     digest = hashlib.sha256(cookie.encode()).hexdigest()
     with auth_lock:
@@ -341,7 +348,7 @@ def job_log(job_id: str, _=Depends(admin)):
 
 @app.get('/forge/api/settings')
 def settings(_=Depends(admin)):
-    return {k: v for k, v in config.get().items() if k not in ('ffmpeg', 'ffprobe', 'jellyfin_data', 'host', 'port')}
+    return {k: v for k, v in config.get().items() if k not in ('ffmpeg', 'ffprobe', 'jellyfin_data', 'host', 'port', 'bridge_token_file')}
 
 
 @app.put('/forge/api/settings')
