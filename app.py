@@ -57,13 +57,26 @@ async def lifespan(_):
 
 
 app = FastAPI(title='Media Forge', docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
-public_host = urlparse(config.get()['public_url']).hostname
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', '[::1]', public_host, 'testserver'])
+def configured_public_origins():
+    settings = config.get()
+    aliases = settings.get('public_aliases', [])
+    if not isinstance(aliases, list):
+        raise ValueError('public_aliases must be a list of HTTP(S) origins')
+    origins = set()
+    for value in [settings['public_url'], *aliases]:
+        public = urlparse(value)
+        if public.scheme not in ('http', 'https') or not public.hostname or public.username or public.password or '*' in public.netloc:
+            raise ValueError('Public addresses must be explicit HTTP(S) URLs without credentials or wildcards')
+        origins.add(f'{public.scheme}://{public.netloc}')
+    return origins
+
+
+public_hosts = [urlparse(origin).hostname for origin in configured_public_origins()]
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', '[::1]', *public_hosts, 'testserver'])
 
 
 def allowed_origin(origin, bridge=False):
-    public = urlparse(config.get()['public_url'])
-    allowed = {f'{public.scheme}://{public.netloc}', 'http://127.0.0.1:5056', 'http://localhost:5056'}
+    allowed = configured_public_origins() | {'http://127.0.0.1:5056', 'http://localhost:5056'}
     if bridge:
         allowed |= {'http://localhost:8096', 'http://127.0.0.1:8096'}
     return origin in allowed

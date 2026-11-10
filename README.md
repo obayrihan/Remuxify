@@ -41,6 +41,8 @@ Edit the ignored `config.json` for your own Jellyfin URL/data directory, FFmpeg/
 
 Open `http://localhost:5056/forge/` and sign in as a Jellyfin administrator. Automatic queueing defaults off. Do not expose the loopback worker port directly. Configure HTTPS/reverse-proxy access deliberately if remote access is needed.
 
+For an additional public hostname, add its exact origin to `public_aliases` in the ignored configuration, for example `["https://admin.example.com"]`, and restart the worker while idle. This extends the allowed hosts and request origins; administrator login and request protection remain required. Configure DNS, proxy routing, and any additional access gate separately. A hostname is not an authentication secret.
+
 The legacy `install.ps1` integrates a Jellyfin web-menu link, startup task, and optional Cloudflare path routing. It requires administrator access and explicit local `jellyfin_web`/`cloudflare_config` configuration. Review its staged changes before applying; it can restart the configured tunnel service. `-PythonExecutable` accepts the absolute interpreter path, and `-CloudflaredExecutable` accepts the tunnel program path. `start-local.ps1` and `restart-forge.ps1` also accept `-PythonExecutable`. These scripts are included for the standalone baseline; a portable plugin installer is still planned. No server or tunnel is required merely to inspect this source repository.
 
 ## Playback and queue behavior
