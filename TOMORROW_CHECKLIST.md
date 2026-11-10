@@ -4,7 +4,18 @@ Created: 9 November 2026. Reorganized: 10 November 2026.
 
 Status reconciled against the first plugin milestone on 10 November 2026. Draft review: https://github.com/obayrihan/Remuxify/pull/1. Checked implementation items do not imply production deployment or completion of the separate acceptance tests below.
 
-**Chosen name: Remuxify.** The deployed application is still named Media Forge, lives at `<deployment directory>`, and uses the existing `/forge/` URL and SYSTEM task. The sanitized standalone baseline remains on `main`. Native plugin migration is underway on `feature/jellyfin-plugin`; see `docs/PLUGIN_MIGRATION.md` and `docs/PLUGIN_VALIDATION.md`. Production remains unchanged.
+**Chosen name: Remuxify.** The live 10.11.8 server now loads the plugin, and its existing Python worker is paired in plugin mode. The deployment directory, database, encrypted credentials, conversion engine, and SYSTEM task remain in place. The sanitized standalone baseline remains on `main`; migration work is on `feature/jellyfin-plugin`. See `docs/PLUGIN_MIGRATION.md` and `docs/PLUGIN_VALIDATION.md`.
+
+### Stopping point — 10 November 2026
+
+- [x] Install the matching 10.11.8 plugin and confirm the Remuxify page opens inside Jellyfin through the renamed main-menu shortcut. The user's screenshot confirmed the native page and embedded dashboard.
+- [x] Back up the stopped worker, deploy the plugin integration files, pair its local service channel, and restart only its existing task with the queue idle and automatic queueing disabled.
+- [x] Verify private state/settings/history APIs, rejection of anonymous worker access, disabled standalone login, unchanged job history, and unchanged encrypted qBittorrent credentials. No media job was retried or processed during cutover.
+- [ ] Tomorrow: refresh the native page and confirm that Reconnecting clears, library counts and telemetry populate, and queue/history/settings match the existing deployment.
+- [ ] Polish the native page so the connected dashboard is the main view and connection controls can be collapsed. Review the nested dashboard navigation and scrolling with the user.
+- [ ] Run a disposable-media conversion through the rendered native UI, then verify playback, validation/replacement, qBittorrent protection, and playback policy. Leave wider acceptance and packaging work below pending.
+
+Public maintenance has been removed at the user's request, and public Jellyfin access is verified. The separately protected private hostname remains available, including during future maintenance. The temporary maintenance task was removed. Machine-specific routing, backups, and operational receipts stay outside Git.
 
 Workstreams below are ordered **largest to smallest estimated implementation effort**, including their associated tests. Sizes are relative estimates, not time commitments. This is a size ranking rather than a strict execution sequence: perform the safety checks and create a clean source checkout first; resolve the plugin compatibility target before implementing it; publish after the release checks pass. Optional enhancements are explicitly marked and are not required for the first plugin release.
 
@@ -12,7 +23,8 @@ Workstreams below are ordered **largest to smallest estimated implementation eff
 
 - [x] Inspect the current Forge queue and any independent HandBrake work. Historical job IDs in earlier notes are not current status. Do not interrupt HandBrake or restart a worker that is encoding, validating, or committing.
 - [ ] Review a completed production job's validation receipt and confirm playback on the originally affected client.
-- [ ] Back up application settings, queue/recovery journals, credentials, and Jellyfin configuration outside version control. Preserve the working deployment for rollback.
+- [x] Back up worker settings, the SQLite database, queue/recovery data, encrypted credentials, and replaced source before the live worker cutover. Keep the local backup outside version control.
+- [ ] Make and test a full Jellyfin configuration/database backup before a future server upgrade; retain the worker rollback backup.
 - [x] Create a clean source checkout with local runtime data excluded before changing code. Select the repository destination, visibility, and license before publication; see workstream 8.
 
 ## 1. Native Jellyfin plugin integration — XL
@@ -33,7 +45,7 @@ Workstreams below are ordered **largest to smallest estimated implementation eff
 
 - [x] Create the C# plugin and embedded admin dashboard/configuration page, accessible through Dashboard → Plugins → Remuxify. Native servers discover the plugin and serve its resources on both target versions.
 - [x] Implement the required Remuxify main-menu shortcut in place of Media Forge, opening the native plugin page in the current Jellyfin tab. Install a scoped web-shell hook, preserve unrelated links, and reapply it through the boot integration.
-- [ ] Verify rendered shortcut navigation, back/forward behavior, and dashboard interactions in both web clients, including after a web-client update. The hook and served assets are tested; browser click-through acceptance remains pending.
+- [ ] Complete rendered shortcut navigation, back/forward behavior, and dashboard interactions in both web clients, including after a web-client update. Native shortcut opening on the live 10.11.8 client is user-confirmed; broader browser acceptance remains pending.
 - [x] Require Jellyfin administrator authorization on browser-facing plugin data/action endpoints, including inventory, settings, queue/history, logs, and mutations. Authenticate private worker callbacks separately with the service credential; public static assets contain no user data. Use Jellyfin's existing session rather than a second browser login.
 - [x] Define a versioned plugin/worker protocol and authenticate local commands using a protected channel or service credential. Loopback alone is not authentication. Restrict file operations to current Jellyfin libraries.
 - [x] Forward authorized browser requests through Jellyfin, keeping worker credentials out of the browser and the worker API private.
@@ -45,11 +57,11 @@ Workstreams below are ordered **largest to smallest estimated implementation eff
 ### Dynamic Jellyfin data integration
 
 - [x] Supply library roots and playback information through Jellyfin services. Preserve discovery when library locations change, recursive filesystem watching, periodic reconciliation, and file-settling checks. Never hardcode media directories.
-- [x] Remove the dependency on reading an API key from Jellyfin's database in plugin mode; keep the legacy standalone mode unchanged for the current deployment.
+- [x] Remove the dependency on reading an API key from Jellyfin's database in plugin mode. The existing worker now uses native plugin context; legacy standalone mode remains available as a rollback option.
 - [x] Verify native administrator access, anonymous/viewer rejection, immediate privilege revocation, library additions, API commands, and synthetic conversion against both isolated native servers.
 - [ ] Verify rendered native navigation, library removals, and worker restart/reconnect against both targets.
 
-**Current milestone:** the compatibility spike and first plugin/worker implementation are complete. Builds, API-host tests, native HTTP checks, privilege revocation, and synthetic conversion passed for both targets. Continue with visual client acceptance and disposable deployment/rollback testing before requesting production cutover approval.
+**Current milestone:** both-target development checks passed, and the user-approved 10.11.8 worker cutover is complete. The native page opens and the private worker APIs are healthy. Continue tomorrow with the rendered connected dashboard and disposable UI-driven conversion; do not treat this as completed release acceptance.
 
 ## 2. Conversion recovery and progress preservation — L
 
@@ -163,4 +175,4 @@ Queue state, installed software versions, settings, and running HandBrake work m
 - Official plugin template: https://github.com/jellyfin/jellyfin-plugin-template
 - Plugin installation: https://jellyfin.org/docs/general/server/plugins/
 
-Resume prompt: **Read `TOMORROW_CHECKLIST.md`, `docs/PLUGIN_MIGRATION.md`, and `docs/PLUGIN_VALIDATION.md` in the clean Remuxify source checkout on `feature/jellyfin-plugin`. The first migration milestone is implemented and tested on isolated 10.11.8 and 12.4 servers. Continue with rendered native-UI acceptance and disposable package/update/rollback checks before requesting production cutover approval. Preserve the approved Python worker architecture and existing conversion/playback safeguards.**
+Resume prompt: **Read the stopping-point section in `TOMORROW_CHECKLIST.md`, plus `docs/PLUGIN_MIGRATION.md` and `docs/PLUGIN_VALIDATION.md`, on `feature/jellyfin-plugin`. The live 10.11.8 plugin and existing worker are paired; public access is restored and the protected private hostname remains available. First verify the connected native dashboard and telemetry, then discuss page layout and run a disposable UI-driven conversion. Preserve the existing data, credentials, Python worker architecture, and conversion/playback safeguards. Do not repeat the cutover or upgrade Jellyfin automatically.**

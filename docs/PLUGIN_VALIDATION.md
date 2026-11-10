@@ -25,4 +25,12 @@ Python validation additionally passed 57 non-GPU unit/integration tests covering
 
 Development-only test accounts, pairing files, tokens, runtime databases, raw logs, and machine-specific reports are outside the source checkout and are not committed. Published summaries intentionally omit those values.
 
+## Separate live deployment checkpoint — 10 November 2026
+
+After the isolated checks, the user installed the 10.11.8 build and confirmed the native page and embedded dashboard in a screenshot. A separately approved worker cutover backed up the stopped worker configuration, database, encrypted credentials, recovery data, and replaced source. The existing worker was paired in plugin mode and restarted using its existing SYSTEM task. Jellyfin was not upgraded or restarted by this cutover; independent HandBrake work was not stopped.
+
+Twenty-four relevant API/authentication, private-bridge, pairing, and integration-planning checks passed in an isolated worker directory before deployment. Live private worker state/settings/history/credential-status reads passed; anonymous access was rejected and standalone login disabled. The migration verified unchanged job history, encrypted qBittorrent credentials, and existing presets. It did not retry or process any media job. Native bridge context was available from Jellyfin services.
+
+The rendered dashboard showed Reconnecting before the worker cutover. Its connected state, complete visual interactions, and UI-driven conversion still require user acceptance; they are not counted as passed by the private HTTP checks. Live backup paths and receipts remain local and excluded from this repository.
+
 Remaining acceptance work includes rendered UI/navigation on both clients, base-URL hosting, UI-driven conversion, packaging/install/update/rollback on a disposable deployment, and a reviewed migration plan for production settings, credentials, and recovery journals. No production service restart, Jellyfin upgrade, tunnel change, or real-media conversion was performed for these checks.
