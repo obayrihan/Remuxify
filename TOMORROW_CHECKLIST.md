@@ -2,7 +2,7 @@
 
 Created: 9 November 2026. Reorganized: 10 November 2026.
 
-**Chosen name: Remuxify.** The deployed application is still named Media Forge, lives at `<deployment directory>`, and uses the existing `/forge/` URL and SYSTEM task. The plugin migration has not started. This repository records the sanitized standalone baseline for version control before plugin development.
+**Remuxify.** The deployed application is still named Media Forge, lives at `<deployment directory>`, and uses the existing `/forge/` URL and SYSTEM task. The plugin migration has not started. This repository records the sanitized standalone baseline for version control before plugin development.
 
 Workstreams below are ordered **largest to smallest estimated implementation effort**, including their associated tests. Sizes are relative estimates, not time commitments. This is a size ranking rather than a strict execution sequence: perform the safety checks and create a clean source checkout first; resolve the plugin compatibility target before implementing it; publish after the release checks pass. Optional enhancements are explicitly marked and are not required for the first plugin release.
 
