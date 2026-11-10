@@ -30,6 +30,21 @@ class ApiTests(unittest.TestCase):
         response=self.client.post('/forge/api/login',json={'username':'test','password':'test'},headers={'X-Forge-Request':'1','Origin':'https://untrusted.invalid'})
         self.assertEqual(response.status_code,403)
 
+    def test_public_alias_requires_explicit_configuration(self):
+        settings = dict(app.config.get(), public_aliases=['https://admin.example.test'])
+        with patch.object(app.config, 'get', return_value=settings):
+            self.assertTrue(app.allowed_origin('https://admin.example.test'))
+            self.assertFalse(app.allowed_origin('https://other.example.test'))
+            self.assertFalse(app.allowed_origin('http://admin.example.test'))
+        with patch.object(app.config, 'get', return_value=dict(settings, public_aliases=[])):
+            self.assertFalse(app.allowed_origin('https://admin.example.test'))
+
+    def test_public_alias_rejects_wildcards_and_embedded_credentials(self):
+        for alias in ('https://*.example.test', 'https://user:password@example.test', 'file:///tmp/example'):
+            with self.subTest(alias=alias), patch.object(app.config, 'get', return_value=dict(app.config.get(), public_aliases=[alias])):
+                with self.assertRaises(ValueError):
+                    app.configured_public_origins()
+
     def test_nonadmin_session_is_rejected(self):
         with patch.object(app.jellyfin,'request',return_value=Response({'Name':'viewer','Policy':{'IsAdministrator':False}})):
             response=self.client.post('/forge/auth/bridge',content='token=test-only',headers={'Origin':'http://localhost:8096','Content-Type':'application/x-www-form-urlencoded'},follow_redirects=False)

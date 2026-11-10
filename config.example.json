@@ -2,6 +2,7 @@
   "jellyfin_url": "http://127.0.0.1:8096",
   "jellyfin_data": "C:/ProgramData/Jellyfin/Server",
   "public_url": "https://jellyfin.example.com/forge/",
+  "public_aliases": [],
   "ffmpeg": "C:\\Program Files\\Jellyfin\\Server\\ffmpeg.exe",
   "ffprobe": "C:\\Program Files\\Jellyfin\\Server\\ffprobe.exe",
   "host": "127.0.0.1",
