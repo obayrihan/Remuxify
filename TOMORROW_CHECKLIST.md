@@ -2,6 +2,8 @@
 
 Created: 9 November 2026. Reorganized: 10 November 2026.
 
+Status reconciled against the first plugin milestone on 10 November 2026. Draft review: https://github.com/obayrihan/Remuxify/pull/1. Checked implementation items do not imply production deployment or completion of the separate acceptance tests below.
+
 **Chosen name: Remuxify.** The deployed application is still named Media Forge, lives at `<deployment directory>`, and uses the existing `/forge/` URL and SYSTEM task. The sanitized standalone baseline remains on `main`. Native plugin migration is underway on `feature/jellyfin-plugin`; see `docs/PLUGIN_MIGRATION.md` and `docs/PLUGIN_VALIDATION.md`. Production remains unchanged.
 
 Workstreams below are ordered **largest to smallest estimated implementation effort**, including their associated tests. Sizes are relative estimates, not time commitments. This is a size ranking rather than a strict execution sequence: perform the safety checks and create a clean source checkout first; resolve the plugin compatibility target before implementing it; publish after the release checks pass. Optional enhancements are explicitly marked and are not required for the first plugin release.
@@ -31,17 +33,20 @@ Workstreams below are ordered **largest to smallest estimated implementation eff
 
 - [x] Create the C# plugin and embedded admin dashboard/configuration page, accessible through Dashboard → Plugins → Remuxify. Native servers discover the plugin and serve its resources on both target versions.
 - [ ] Verify rendered navigation and dashboard interactions in both web clients; a dedicated sidebar entry remains optional.
-- [x] Require administrator authorization on every plugin endpoint, including inventory, settings, queue/history, logs, and all mutations. Use Jellyfin's existing session rather than a second browser login.
+- [x] Require Jellyfin administrator authorization on browser-facing plugin data/action endpoints, including inventory, settings, queue/history, logs, and mutations. Authenticate private worker callbacks separately with the service credential; public static assets contain no user data. Use Jellyfin's existing session rather than a second browser login.
 - [x] Define a versioned plugin/worker protocol and authenticate local commands using a protected channel or service credential. Loopback alone is not authentication. Restrict file operations to current Jellyfin libraries.
 - [x] Forward authorized browser requests through Jellyfin, keeping worker credentials out of the browser and the worker API private.
-- [ ] Integrate worker health/startup, GPU capability detection, queue recovery, and clear unavailable-worker errors. Keep conversions outside Jellyfin request threads.
-- [ ] Preserve the existing overview, media inventory, rules, queue/history, logs, settings, telemetry, audio preservation, validation receipts, and crash recovery.
+- [x] Connect the native dashboard/API to the existing out-of-process worker, GPU capability/state reporting, queue, and unavailable/pairing error handling. Conversion remains outside Jellyfin request threads.
+- [ ] Complete portable worker service/startup management and verify worker restart/reconnect behavior with the plugin.
+- [x] Reuse the existing dashboard views and conversion engine. Verify the native API path with synthetic conversions preserving all video frames, surround audio, and full-validation receipts on both target versions.
+- [ ] Complete rendered feature-parity acceptance for overview, inventory/filtering, rules, queue/history, logs, settings, and telemetry, plus the integrated recovery/qBittorrent/playback cases below.
 
 ### Dynamic Jellyfin data integration
 
 - [x] Supply library roots and playback information through Jellyfin services. Preserve discovery when library locations change, recursive filesystem watching, periodic reconciliation, and file-settling checks. Never hardcode media directories.
-- [x] Remove the current dependency on reading an API key from Jellyfin's database once the plugin supplies these services.
-- [ ] Verify native admin navigation, session revocation, library additions/removals, worker restart/reconnect, and end-to-end commands against the target server.
+- [x] Remove the dependency on reading an API key from Jellyfin's database in plugin mode; keep the legacy standalone mode unchanged for the current deployment.
+- [x] Verify native administrator access, anonymous/viewer rejection, immediate privilege revocation, library additions, API commands, and synthetic conversion against both isolated native servers.
+- [ ] Verify rendered native navigation, library removals, and worker restart/reconnect against both targets.
 
 **Current milestone:** the compatibility spike and first plugin/worker implementation are complete. Builds, API-host tests, native HTTP checks, privilege revocation, and synthetic conversion passed for both targets. Continue with visual client acceptance and disposable deployment/rollback testing before requesting production cutover approval.
 
@@ -76,11 +81,14 @@ Workstreams below are ordered **largest to smallest estimated implementation eff
 
 - [ ] Add hardware-independent build/API/configuration checks to ordinary CI. Run GPU integration tests only on a suitable trusted test host with disposable media.
 - [ ] Re-run conversion/recovery checks: incomplete downloads, active locks, low storage/resources, cancellation, reboot, changed sources/outputs, and interrupted commit. Include the new recovery-stage tests from workstream 2.
-- [ ] Test unauthenticated/non-admin rejection, revoked sessions, request forgery, worker-channel authentication, and path restrictions. Never send service credentials to the browser or logs.
+- [x] Test unauthenticated/non-admin rejection, revoked administrator sessions, worker-channel authentication, allowed proxy routes, rejected external worker endpoints, and restricted asset names. Keep service credentials out of browser responses and committed files.
+- [ ] Complete native browser/request-forgery and base-URL acceptance, and the wider filesystem/recovery path checks for release.
 - [ ] Verify install, restart, update, uninstall, and rollback on every advertised Jellyfin/platform combination, including the latest stable target.
 - [ ] Verify qBittorrent and playback policies in the complete plugin-to-worker flow, as specified in workstream 5.
-- [ ] Produce a plugin release ZIP and repository manifest with compatible target versions and checksums. Explain clearly that a separate worker is required.
-- [ ] Document configuration, worker installation, GPU requirements, recovery behavior, known limitations, migration, and rollback. State exact tested versions and platforms.
+- [x] Produce separate local development-preview ZIPs and checksums for 10.11.8 and 12.4, with ABI-specific metadata. Document that the Python worker remains required.
+- [ ] Prepare and verify the release/catalog repository manifest after acceptance. No plugin catalog or GitHub release is published yet.
+- [x] Document preview setup/pairing, protocol/authentication, compatibility, test evidence, and known acceptance limits in `docs/PLUGIN_MIGRATION.md` and `docs/PLUGIN_VALIDATION.md`.
+- [ ] Finish production installation, existing-data migration, update/uninstall, and rollback documentation after those flows are tested.
 - [ ] Complete end-to-end acceptance on the disposable server before production cutover or announcing plugin availability.
 
 ## 5. Playback, queue controls, and qBittorrent coordination — M
@@ -100,7 +108,7 @@ Workstreams below are ordered **largest to smallest estimated implementation eff
 
 - [ ] Refine detection of active, paused, and stale playback sessions. Define the paused-client policy explicitly and always protect an in-use source from replacement.
 - [ ] Review the wording and interaction of the wait/force/queue-pause controls so users can predict which jobs start and which operations still wait.
-- [ ] Carry these policies into the plugin's native Jellyfin session integration without restoring playback-triggered cancellation.
+- [x] Wire the existing playback policies to native Jellyfin session context without restoring playback-triggered cancellation or changing the paused-session policy.
 - [ ] Test playback beginning/ending during encoding, validation, and replacement; watched versus unrelated files; monitoring failures; and each wait/force setting combination.
 - [ ] Verify qBittorrent exact-path matching, completed versus incomplete downloads, stop confirmation, unavailable API, and lock release. Never automatically resume, recheck, or delete torrents or their data.
 
@@ -112,14 +120,16 @@ Current baseline: P5, CQ 23, 20 Mbps video ceiling, 8-bit HEVC, original audio c
 
 - [ ] Decide whether an 8K/source-bit-depth preset belongs in the first release or a later release. This is not yet an approved requirement to add HDR support.
 - [ ] If selected, preserve the requested source bit depth, choose appropriate bitrate limits, check GPU capabilities and storage estimates, and evaluate representative samples before allowing permanent replacement.
-- [ ] Explain that P4/P5 affect speed/compression tradeoffs and that successful structural/full-decode validation does not prove equivalent visual quality. Do not present the current 20 Mbps/8-bit defaults as a same-quality 8K profile.
+- [x] Document that encoding is lossy and structural/full-decode validation does not prove equivalent visual quality. The current 20 Mbps/8-bit defaults are not advertised as a same-quality 8K profile.
+- [ ] Include preset-specific P4/P5 speed/compression guidance when the quality/preset documentation is expanded.
 - [ ] Validate playback and output quality on the affected clients before advertising the new preset.
 
 ## 7. Remuxify naming and branding — S–M
 
 - [x] Choose **Remuxify** to replace Media Forge; the user identified an existing media organiser named MediaForge.
 - [ ] Check existing projects, repositories, and Jellyfin plugins for conflicts with Remuxify before publishing. Availability has not been verified.
-- [ ] Apply Remuxify to the dashboard, plugin display name/namespace, repository/package names, release manifest, documentation, installer, and service/task labels.
+- [x] Use Remuxify for the repository, native plugin display name/namespace, preview package names, and migration documentation.
+- [ ] Finish consistent dashboard/logo branding, installer/service/task labels, and release-manifest branding while preserving the existing live installation until a reviewed migration.
 - [ ] Coordinate any directory, task/service, and URL migration with workstream 3, preserving configuration, encrypted credentials, queue history, and recovery journals. Do not rename the deployed installation during active work.
 
 ## 8. Git source preparation and publication — S
@@ -127,9 +137,9 @@ Current baseline: P5, CQ 23, 20 Mbps video ceiling, 8-bit HEVC, original audio c
 - [x] Select the private repository `obayrihan/remuxify` and prepare the standalone version-control baseline before plugin development.
 - [ ] Select a project license before an open-source release.
 - [x] Prepare a clean, privacy-sanitized standalone source checkout with `config.example.json`, setup documentation, tests, and this checklist. Runtime data and credentials are excluded.
-- [ ] Maintain exclusions for `.dpapi` files and temporary credential files, databases, logs, media, local configuration, backups, staging, and build artifacts.
+- [x] Verify exclusions for `.dpapi` and pairing secret/temporary files, databases, logs, media, local configuration, backups, staging, and build artifacts before both milestone pushes. Repeat this check for future commits.
 - [x] Review the initial staged baseline for personal data, API tokens, credentials, cookies, local configuration, and generated runtime files. Repeat this review for future commits; `.gitignore` does not remove previously tracked files or secrets from history.
-- [ ] Commit reviewed changes with clear milestones. If publishing a standalone checkpoint before the plugin is finished, label it as the standalone baseline.
+- [x] Commit and push the standalone baseline (`7ddfacc`) and first plugin preview (`b8289b8` on `feature/jellyfin-plugin`). Open draft PR #1; keep the standalone baseline on `main` until review.
 - [ ] After compatibility, packaging, and release checks pass, set the selected remote and push. Do not advertise an unimplemented plugin as available.
 
 ## Working baseline and historical verification
