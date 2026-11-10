@@ -13,8 +13,27 @@ import shutil
 from urllib.parse import urlparse
 
 from core import BASE, Config
+from navigation import native_index, set_menu
 
 STAGING = BASE / 'staging'
+NATIVE_MENU_MARKER = BASE / 'data' / 'native-navigation.enabled'
+
+
+def use_native_menu():
+    return NATIVE_MENU_MARKER.is_file() or Config().get().get('integration_mode') == 'plugin'
+
+
+def stage_native_navigation(web):
+    # Prepare both assets before touching the live web client.
+    html = native_index((web / 'index.html').read_text(encoding='utf-8-sig'))
+    script = BASE / 'jellyfin-navigation.js'
+    if not script.is_file():
+        raise RuntimeError('Missing jellyfin-navigation.js')
+    STAGING.mkdir(exist_ok=True)
+    output = STAGING / 'jellyfin-native-index.html'
+    output.write_text(html, encoding='utf-8')
+    return [{'source': str(output), 'target': str(web / 'index.html')},
+            {'source': str(script), 'target': str(web / 'remuxify-navigation.js')}]
 
 
 def configured_paths(require_tunnel=False):
@@ -33,9 +52,8 @@ def plan():
     STAGING.mkdir(exist_ok=True)
     settings = Config().get()
     web_config = json.loads((WEB / 'config.json').read_text(encoding='utf-8-sig'))
-    links = web_config.setdefault('menuLinks', [])
-    links[:] = [link for link in links if link.get('name') != 'Media Forge']
-    links.append({'name': 'Media Forge', 'icon': 'video_settings', 'url': '/web/forge.html'})
+    native = use_native_menu()
+    set_menu(web_config, native)
     staged_web = STAGING / 'jellyfin-web-config.json'
     staged_web.write_text(json.dumps(web_config, indent=2) + '\n', encoding='utf-8')
     tunnel = TUNNEL.read_text(encoding='utf-8-sig')
@@ -57,6 +75,9 @@ def plan():
         {'source': str(STAGING / 'cloudflared-config.yml'), 'target': str(TUNNEL)}],
         'public_url': settings['public_url'],
         'note': 'The menu link is visible in the web client; access is enforced for administrators by the server.'}
+    if native:
+        manifest['files'] = [item for item in manifest['files'] if item['target'] != str(WEB / 'forge.html')]
+        manifest['files'].extend(stage_native_navigation(WEB))
     (STAGING / 'plan.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     print('Prepared Jellyfin menu link, SSO launcher, and /forge/ tunnel route in ' + str(STAGING))
     return manifest
@@ -83,30 +104,37 @@ def replace_with_backup(source, target):
             temp.unlink()
 
 
-def ensure_menu():
+def ensure_menu(native=None):
     WEB, _ = configured_paths()
+    native = use_native_menu() if native is None else native
     # Also used at boot to restore the link if a Jellyfin update replaced its web files.
     web_config = json.loads((WEB / 'config.json').read_text(encoding='utf-8-sig'))
-    desired = {'name': 'Media Forge', 'icon': 'video_settings', 'url': '/web/forge.html'}
-    links = web_config.setdefault('menuLinks', [])
-    if desired not in links:
-        links[:] = [link for link in links if link.get('name') != 'Media Forge']
-        links.append(desired)
+    original = json.dumps(web_config, sort_keys=True)
+    set_menu(web_config, native)
+    assets = stage_native_navigation(WEB) if native else []
+    if json.dumps(web_config, sort_keys=True) != original:
         STAGING.mkdir(exist_ok=True)
         output = STAGING / 'jellyfin-web-config.json'
         output.write_text(json.dumps(web_config, indent=2) + '\n', encoding='utf-8')
         replace_with_backup(output, WEB / 'config.json')
-    replace_with_backup(BASE / 'jellyfin-launcher.html', WEB / 'forge.html')
-    print('Jellyfin Media Forge link is installed.')
+    if native:
+        for asset in assets:
+            replace_with_backup(asset['source'], asset['target'])
+        NATIVE_MENU_MARKER.parent.mkdir(exist_ok=True)
+        NATIVE_MENU_MARKER.touch()
+    else:
+        replace_with_backup(BASE / 'jellyfin-launcher.html', WEB / 'forge.html')
+    print('Jellyfin Remuxify native shortcut is installed.' if native else 'Jellyfin Media Forge link is installed.')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--ensure-menu', action='store_true')
+    parser.add_argument('--native-menu', action='store_true', help='Use the installed Remuxify plugin page in the current Jellyfin tab')
     args = parser.parse_args()
-    if args.ensure_menu:
-        ensure_menu()
+    if args.ensure_menu or args.native_menu:
+        ensure_menu(native=True if args.native_menu else None)
     else:
         manifest = plan()
         if args.apply:

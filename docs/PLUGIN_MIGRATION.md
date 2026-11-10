@@ -65,6 +65,8 @@ The command verifies the native bridge before atomically updating the local conf
 
 6. Start the worker and open the dashboard from the plugin page. Existing standalone login/SSO endpoints are disabled in plugin mode; use the native Jellyfin session. Standalone mode remains the default for unchanged installations.
 
+For the main Jellyfin menu, configure the local `jellyfin_web` path and run `python integration.py --native-menu` with permissions to edit that web directory. The Remuxify shortcut opens the native plugin page in the current tab. A scoped script in the web shell overrides the usual new-tab behavior only for this exact internal route. No compiled web bundle is changed. Web files are backed up; the existing boot integration can reapply the hook after an update. This is a separately installed navigation hook rather than an automatic effect of copying the plugin DLL. Pairing, administrator authorization, and the separate worker remain unchanged.
+
 The worker account must be able to read the private pairing file. For the current Windows setup, SYSTEM can read a file created by the Jellyfin account. Different service-account arrangements require an explicit permissions/deployment decision rather than making the file generally readable.
 
 ## Validation and remaining acceptance

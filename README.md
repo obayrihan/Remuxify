@@ -45,6 +45,8 @@ For an additional public hostname, add its exact origin to `public_aliases` in t
 
 The legacy `install.ps1` integrates a Jellyfin web-menu link, startup task, and optional Cloudflare path routing. It requires administrator access and explicit local `jellyfin_web`/`cloudflare_config` configuration. Review its staged changes before applying; it can restart the configured tunnel service. `-PythonExecutable` accepts the absolute interpreter path, and `-CloudflaredExecutable` accepts the tunnel program path. `start-local.ps1` and `restart-forge.ps1` also accept `-PythonExecutable`. These scripts are included for the standalone baseline; a portable plugin installer is still planned. No server or tunnel is required merely to inspect this source repository.
 
+After installing the native plugin, `python integration.py --native-menu` replaces the old shortcut with **Remuxify**, pointing to Jellyfin's internal `#/configurationpage?name=Remuxify` route. Jellyfin's custom links ordinarily open a new tab; a small same-origin script changes only this shortcut to use the current tab. The installer backs up the affected web files and adds an idempotent script tag to `index.html`; it does not rebuild Jellyfin, restart services, or change access checks. Refresh the web client after installation. A local data marker lets `--ensure-menu` reapply the navigation after web-client updates. Plugin mode also selects native navigation automatically. The plugin/worker connection still needs separate pairing.
+
 ## Playback and queue behavior
 
 - **Wait to start while Jellyfin is playing** delays new jobs. When disabled, unrelated playback does not block starting work.

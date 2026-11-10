@@ -32,7 +32,8 @@ Workstreams below are ordered **largest to smallest estimated implementation eff
 ### Dashboard, authorization, and worker protocol
 
 - [x] Create the C# plugin and embedded admin dashboard/configuration page, accessible through Dashboard → Plugins → Remuxify. Native servers discover the plugin and serve its resources on both target versions.
-- [ ] Verify rendered navigation and dashboard interactions in both web clients; a dedicated sidebar entry remains optional.
+- [x] Implement the required Remuxify main-menu shortcut in place of Media Forge, opening the native plugin page in the current Jellyfin tab. Install a scoped web-shell hook, preserve unrelated links, and reapply it through the boot integration.
+- [ ] Verify rendered shortcut navigation, back/forward behavior, and dashboard interactions in both web clients, including after a web-client update. The hook and served assets are tested; browser click-through acceptance remains pending.
 - [x] Require Jellyfin administrator authorization on browser-facing plugin data/action endpoints, including inventory, settings, queue/history, logs, and mutations. Authenticate private worker callbacks separately with the service credential; public static assets contain no user data. Use Jellyfin's existing session rather than a second browser login.
 - [x] Define a versioned plugin/worker protocol and authenticate local commands using a protected channel or service credential. Loopback alone is not authentication. Restrict file operations to current Jellyfin libraries.
 - [x] Forward authorized browser requests through Jellyfin, keeping worker credentials out of the browser and the worker API private.
