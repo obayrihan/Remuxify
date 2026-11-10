@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0d0f12"><title>Media Forge · Jellyfin</title>
+  <link rel="icon" href="/forge/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/forge/static/style.css"><script src="/forge/static/app.js" defer></script>
+</head>
+<body>
+  <section id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="brand-mark">F<span>↗</span></div><div class="eyebrow">JELLYFIN / ADMIN TOOLS</div>
+      <h1>Media Forge<span class="accent">.</span></h1><p class="muted">A better format. A smoother watch.</p>
+      <div class="divider"></div><h2>Sign in to your server</h2><p class="small muted">Use your Jellyfin administrator account. Opening Forge from Jellyfin signs you in automatically.</p>
+      <form id="login-form">
+        <label>Username<input name="username" autocomplete="username" required autofocus></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password"></label>
+        <p id="login-error" class="error" role="alert"></p><button class="primary wide" type="submit">Open dashboard <span>↗</span></button>
+      </form><p class="footnote">Credentials go only to your Jellyfin server. Administrator access required.</p>
+    </div>
+  </section>
+  <div id="shell" hidden>
+    <aside class="sidebar">
+      <a href="#overview" class="brand"><span class="brand-mark compact">F<span>↗</span></span><span>Media Forge<span class="accent">.</span><small>JELLYFIN ADMIN</small></span></a>
+      <div class="nav-label">WORKSPACE</div>
+      <nav aria-label="Main navigation">
+        <a href="#overview" data-page="overview"><span class="nav-icon">◫</span>Overview</a>
+        <a href="#library" data-page="library"><span class="nav-icon">▤</span>Media library <b id="nav-flagged">0</b></a>
+        <a href="#queue" data-page="queue"><span class="nav-icon">⇄</span>Queue & history <b id="nav-queued">0</b></a>
+        <a href="#rules" data-page="rules"><span class="nav-icon">⌘</span>Detection rules</a>
+        <a href="#settings" data-page="settings"><span class="nav-icon">⚙</span>Settings</a>
+      </nav>
+      <div class="sidebar-bottom"><div class="engine"><span class="dot" id="engine-dot"></span><span id="engine-label">Connecting</span></div><a id="jellyfin-link" href="http://localhost:8096/web/">↖ Back to Jellyfin</a><button id="logout" class="text-button">Sign out <span id="user-name"></span></button><small>LOCAL WORKER · NVENC HEVC</small></div>
+    </aside>
+    <div class="main-wrap">
+      <header class="topbar"><span class="breadcrumb">JELLYFIN <span>/</span> MEDIA FORGE <span>/</span> <b id="page-label">OVERVIEW</b></span><div class="top-actions"><span id="connection" class="badge good">● Live</span><button id="rescan" class="secondary small-button">↻ Scan libraries</button></div></header>
+      <main>
+        <section id="overview" class="view">
+          <div class="page-heading"><div><div class="eyebrow">YOUR LIBRARY, REFINED</div><h1>Keep playback smooth<span class="accent">.</span></h1><p class="muted">Find compatibility candidates. Convert with NVENC. Replace only after validation.</p></div><a href="#library" class="primary">Browse media <span>↗</span></a></div>
+          <div id="notices"></div>
+          <div class="stats-grid">
+            <article class="stat"><span>MEDIA INDEXED</span><strong id="stat-indexed">—</strong><small id="scan-status">Discovering library folders</small></article>
+            <article class="stat accent-stat"><span>MATCH DETECTION RULES</span><strong id="stat-flagged">—</strong><small>Candidates for review</small></article>
+            <article class="stat"><span>IN THE QUEUE</span><strong id="stat-queued">—</strong><small id="queue-mode">One job at a time</small></article>
+            <article class="stat"><span>VERIFIED REPLACEMENTS</span><strong id="stat-completed">—</strong><small id="stat-saved">Originals protected until verified</small></article>
+          </div>
+          <div class="section-heading"><h2>Worker activity</h2><button class="text-button pause-toggle">Pause queue</button></div>
+          <div id="active-job"></div>
+          <div class="two-column">
+            <section class="panel"><div class="panel-head"><h2>Host headroom</h2><span id="resource-freshness" class="badge">SAMPLING</span></div><div id="resources"></div><p class="footnote">Queue waits for headroom before starting. <span id="disk-stats-note">Waiting for disk counters.</span> ETA covers the current phase.</p></section>
+            <section class="panel"><div class="panel-head"><h2>Library storage</h2><span id="folder-count" class="mono muted"></span></div><div id="storage"></div><div class="panel-foot"><span class="dot"></span><span>New files and folders are watched automatically</span></div></section>
+          </div>
+          <section class="panel event-panel"><div class="panel-head"><h2>Recent activity</h2><a href="#queue" class="text-link">View queue ↗</a></div><div id="events"></div></section>
+        </section>
+        <section id="library" class="view" hidden>
+          <div class="page-heading"><div><div class="eyebrow">INSPECT & SELECT</div><h1>Media library<span class="accent">.</span></h1><p class="muted">Review exact stream details before queuing a replacement.</p></div><button id="queue-selected" class="primary" disabled>Queue selected <span id="selected-count">0</span></button></div>
+          <div class="info-strip">✓ Every replacement is fully decoded and checked before the original is removed. Incomplete or failed encodes keep the original.</div>
+          <div class="filterbar"><div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Search filenames or folders…" aria-label="Search media"></div><select id="library-filter" aria-label="Library"><option value="">All libraries</option></select><label class="toggle-label"><input type="checkbox" id="flagged-only" checked> Rule matches only</label></div>
+          <div class="panel table-panel"><div class="table-scroll"><table><thead><tr><th><input type="checkbox" id="select-all" aria-label="Select visible media"></th><th>MEDIA</th><th>VIDEO / CONTAINER</th><th>SIZE</th><th>REVIEW</th><th></th></tr></thead><tbody id="media-body"></tbody></table></div><div class="pagination"><span id="media-total" class="muted small"></span><div><button id="previous" class="secondary small-button">← Previous</button><button id="next" class="secondary small-button">Next →</button></div></div></div>
+          <p class="footnote">A metadata match is a candidate, not proof of faulty playback. Files still downloading can expose valid headers; full decode errors always prevent replacement.</p>
+        </section>
+        <section id="queue" class="view" hidden>
+          <div class="page-heading"><div><div class="eyebrow">DURABLE, ONE AT A TIME</div><h1>Queue & history<span class="accent">.</span></h1><p class="muted">Progress, validation receipts, and recovery details in one place.</p></div><button class="secondary pause-toggle">Pause queue</button></div>
+          <div id="queue-jobs"></div>
+        </section>
+        <section id="rules" class="view" hidden>
+          <div class="page-heading"><div><div class="eyebrow">PRECISION OVER GUESSWORK</div><h1>Detection rules<span class="accent">.</span></h1><p class="muted">Only your enabled rules mark a file as a compatibility candidate.</p></div><span id="auto-state" class="badge">AUTO QUEUE OFF</span></div>
+          <div class="info-strip">The initial compatibility rule matches MP4 + HEVC Main 10 + yuv420p10le + hev1. The default conversion uses 8-bit HEVC Main + hvc1. A rule match is a compatibility candidate, not a universal HEVC defect.</div>
+          <div id="rules-list"></div>
+          <section class="panel"><div class="panel-head"><h2>Edit matching rules</h2><span class="badge">ALL CONDITIONS MUST MATCH</span></div><p class="small muted">Values in one list are alternatives. Separate rules are alternatives. Empty rules are rejected. Supported fields: video_codecs, profiles, pixel_formats, containers, codec_tags, min_bit_depth, max_bit_depth, min_width, interlaced.</p><label class="sr-only" for="rules-json">Detection rules JSON</label><textarea id="rules-json" spellcheck="false" rows="18"></textarea><div class="form-footer"><span class="small muted">Editing rules never starts a conversion by itself.</span><button id="save-rules" class="primary">Save rules ↗</button></div></section>
+        </section>
+        <section id="settings" class="view" hidden>
+          <div class="page-heading"><div><div class="eyebrow">ENCODER & SAFETY LIMITS</div><h1>Make it your own<span class="accent">.</span></h1><p class="muted">Changes apply to newly queued jobs. Existing jobs keep their selected preset.</p></div><button id="test-encoder" class="secondary">Test GPU pipeline</button></div>
+          <form id="settings-form">
+            <section class="panel"><div class="panel-head"><h2>Output preset</h2><span class="badge good">NVIDIA H.265</span></div><div class="form-grid">
+              <label>Container<select name="output_container"><option value="mp4">MP4 · hvc1 · fast start</option><option value="mkv">MKV · preserve subtitles & attachments</option></select></label>
+              <label>Video bit depth<select name="output_bit_depth"><option value="8">8-bit · matches your working sample</option><option value="10">10-bit</option><option value="source">Keep source bit depth</option></select></label>
+              <label>Video decoding<select name="video_decoder"><option value="auto">Auto · NVDEC when supported, CPU fallback</option><option value="nvdec">Require NVIDIA NVDEC</option><option value="cpu">CPU decoding</option></select></label>
+              <label>Audio<select name="audio_mode"><option value="copy">Copy all original tracks · keep surround</option><option value="aac">AAC · keep channel count</option><option value="aac_stereo">AAC · downmix to stereo</option></select></label>
+              <label>NVENC preset<select name="preset"><option value="p4">P4 · faster</option><option value="p5">P5 · balanced</option><option value="p6">P6 · slower</option></select></label>
+              <label>Constant quality (lower = higher quality)<input type="number" name="cq" min="15" max="35" step="1" required></label>
+              <label>Maximum video rate (Mbps)<input type="number" name="max_video_mbps" min="2" max="100" required></label>
+            </div><p class="footnote">NVDEC accelerates source decoding and bit-depth conversion on supported files. Final validation still decodes every video/audio frame independently on the CPU. HDR / Dolby Vision, interlaced content, and unsupported stream layouts are blocked pending a dedicated profile. MP4 converts text subtitles to timed text; use MKV to retain their original format and attachments. Re-encoding is lossy.</p></section>
+            <section class="panel"><div class="panel-head"><h2>Resource guardrails</h2><span class="badge">CHECKED BEFORE & DURING JOBS</span></div><div class="form-grid">
+              <label>Free disk reserve (GiB)<input type="number" name="min_free_gb" min="1" max="1000" required></label>
+              <label>Maximum CPU load before start (%)<input type="number" name="max_cpu_percent" min="10" max="99" required></label>
+              <label>Maximum GPU / encoder / decoder load before start (%)<input type="number" name="max_gpu_percent" min="10" max="99" required></label>
+              <label>Maximum disk active time before start (%)<input type="number" name="max_disk_percent" min="10" max="100" required></label>
+              <label>Minimum available RAM (GiB)<input type="number" name="min_ram_gb" min="0.5" max="128" step="0.5" required></label>
+              <label>Minimum available VRAM (MiB)<input type="number" name="min_vram_mb" min="256" max="16000" required></label>
+              <label>File settling time (seconds)<input type="number" name="stable_seconds" min="30" max="3600" required></label>
+            </div><p class="footnote">Storage preflight reserves a conservative maximum output estimate plus the free disk reserve. RAM, VRAM, and disk space are checked during a job. Resource interruptions restart the encode from the original once it is safe. Playback never interrupts an active encode or validation.</p></section>
+            <section class="panel"><div class="panel-head"><h2>Queue behavior</h2></div><label class="switch-row"><span><strong>Wait to start while Jellyfin is playing</strong><small>Running conversions continue when playback starts. Replacing a file always waits if that exact file is being watched.</small></span><input type="checkbox" name="pause_during_playback"></label><label class="switch-row"><span><strong>Force transcode during playback</strong><small>Override playback waits when starting jobs, including for a file being watched. Resource checks stay enabled. Replacing that file still waits until playback ends.</small></span><input type="checkbox" name="force_transcode_during_playback"></label><label class="switch-row"><span><strong>Automatically queue rule matches</strong><small>When enabled, matching supported files are encoded, validated, and replace their originals. Processed outputs are not queued again.</small></span><input type="checkbox" name="auto_queue"></label></section>
+            <div class="form-footer"><span id="settings-message" class="small muted">Interrupted jobs survive a reboot. Failed encodes never replace the original.</span><button class="primary" type="submit">Save settings ↗</button></div>
+          </form>
+          <section class="panel"><div class="panel-head"><h2>qBittorrent file protection</h2><span id="torrent-status" class="badge">NOT CONNECTED</span></div>
+            <p class="small muted">Stop only completed torrents containing the exact source file before conversion and replacement. Other torrents keep running. Matching torrents stay stopped after success or failure; converted files no longer match the torrent hashes. Incomplete downloads wait.</p>
+            <form id="torrent-form"><div class="form-grid">
+              <label>Local Web UI port<input name="port" type="number" min="1" max="65535" value="8080" required></label>
+              <label>Web UI username<input name="username" type="text" autocomplete="off" maxlength="1024" placeholder="Leave blank to keep saved username"></label>
+              <label>Web UI password<input name="password" type="password" autocomplete="new-password" maxlength="1024" placeholder="Leave blank to keep saved password"></label>
+            </div><label class="switch-row"><span><strong>Coordinate with qBittorrent</strong><small>Credentials are encrypted on this Windows host and never returned to the browser.</small></span><input name="enabled" type="checkbox"></label>
+            <div class="form-footer"><span class="small muted">Connection uses 127.0.0.1 only. Saving tests login without stopping any torrent.</span><button class="primary" type="submit">Save & test connection ↗</button></div></form>
+          </section>
+          <section class="panel"><div class="panel-head"><h2>Watched Jellyfin folders</h2><span class="badge">DISCOVERED AUTOMATICALLY</span></div><div id="watched-folders"></div></section>
+        </section>
+      </main><footer class="footer"><span>MEDIA FORGE / JELLYFIN</span><span>ENCODE → VALIDATE → REPLACE</span></footer>
+    </div>
+  </div>
+  <dialog id="details-dialog"><div class="dialog-head"><h2>Media details</h2><button id="close-details" class="secondary small-button" aria-label="Close details">✕</button></div><div id="details-content"></div></dialog>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+</body></html>

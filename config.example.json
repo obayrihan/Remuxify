@@ -1,0 +1,56 @@
+{
+  "jellyfin_url": "http://127.0.0.1:8096",
+  "jellyfin_data": "C:/ProgramData/Jellyfin/Server",
+  "public_url": "https://jellyfin.example.com/forge/",
+  "ffmpeg": "C:\\Program Files\\Jellyfin\\Server\\ffmpeg.exe",
+  "ffprobe": "C:\\Program Files\\Jellyfin\\Server\\ffprobe.exe",
+  "host": "127.0.0.1",
+  "port": 5056,
+  "output_container": "mp4",
+  "video_decoder": "auto",
+  "output_bit_depth": "8",
+  "audio_mode": "copy",
+  "cq": 23,
+  "preset": "p5",
+  "max_video_mbps": 20,
+  "min_free_gb": 5,
+  "max_cpu_percent": 85,
+  "max_gpu_percent": 85,
+  "max_disk_percent": 90,
+  "min_ram_gb": 1.5,
+  "min_vram_mb": 768,
+  "stable_seconds": 120,
+  "scan_interval_seconds": 300,
+  "pause_during_playback": true,
+  "force_transcode_during_playback": false,
+  "auto_queue": false,
+  "queue_paused": false,
+  "max_attempts": 3,
+  "rules": [
+    {
+      "id": "sample-mp4-hev1-main10",
+      "name": "Sample match: MP4 / HEVC Main 10 / hev1",
+      "enabled": true,
+      "conditions": {
+        "containers": [
+          "mp4",
+          "m4v"
+        ],
+        "video_codecs": [
+          "hevc"
+        ],
+        "profiles": [
+          "Main 10"
+        ],
+        "pixel_formats": [
+          "yuv420p10le"
+        ],
+        "codec_tags": [
+          "hev1"
+        ]
+      }
+    }
+  ],
+  "jellyfin_web": "C:/Program Files/Jellyfin/Server/jellyfin-web",
+  "cloudflare_config": ""
+}

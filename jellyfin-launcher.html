@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Opening Media Forge</title><style>body{background:#0d0f12;color:#f0f2f5;font:15px/1.6 system-ui;display:grid;place-items:center;min-height:95vh;margin:0}.card{max-width:450px;padding:36px;border:1px solid #ffffff18;border-radius:12px;background:#13161b}h1{font-size:30px;margin:0 0 10px;letter-spacing:-1px}h1 span,a{color:#e8ff3b}p{color:#8892a0}a{display:inline-block;margin-right:20px;margin-top:15px}</style></head><body><div class="card"><h1>Media Forge<span>.</span></h1><p id="status">Checking your Jellyfin administrator session…</p><a id="open" href="/forge/">Open dashboard ↗</a><a href="/web/">Back to Jellyfin</a></div><script>
+(async()=>{
+  const local=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
+  const base=local ? location.protocol+'//'+location.hostname+':5056/forge/' : '/forge/';
+  document.getElementById('open').href=base;
+  try{
+    const info=await fetch('/System/Info/Public').then(r=>r.json());
+    const credentials=JSON.parse(localStorage.getItem('jellyfin_credentials')||'{}');
+    const server=(credentials.Servers||[]).find(s=>s.Id===info.Id);
+    if(!server?.AccessToken)throw new Error('Sign in with your Jellyfin administrator account to continue.');
+    const response=await fetch('/Users/Me',{headers:{'X-Emby-Token':server.AccessToken}});
+    if(!response.ok)throw new Error('Your Jellyfin session expired. Sign in again to continue.');
+    const user=await response.json();
+    if(!user.Policy?.IsAdministrator||user.Policy?.IsDisabled)throw new Error('Media Forge is available only to Jellyfin administrators.');
+    // POST the existing token. It is never put into a URL, link, browser history, or log.
+    const form=document.createElement('form');form.method='POST';form.action=base+'auth/bridge';
+    const token=document.createElement('input');token.type='hidden';token.name='token';token.value=server.AccessToken;form.append(token);document.body.append(form);form.submit();
+  }catch(error){document.getElementById('status').textContent=error.message;}
+})();
+</script></body></html>
