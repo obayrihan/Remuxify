@@ -8,8 +8,17 @@ const formatPercent = value => typeof value !== 'number' || !Number.isFinite(val
 const activeStates = ['queued','waiting','encoding','validating','committing'];
 let currentPage = 'overview', state = null, jobs = [], mediaItems = [], selected = new Set(), offset = 0, total = 0;
 let signedIn = false, polling = false, settingsLoaded = false, rulesLoaded = false, lastMedia = 0, toastTimer, mediaRequest = 0;
+const pluginHost = window.parent !== window && window.parent.RemuxifyHost;
 
 async function api(path, options = {}) {
+  if (pluginHost) {
+    try { return await pluginHost.request(path, options); }
+    catch (error) {
+      if (error.status === 401 || error.status === 403) showLogin();
+      const detail = typeof error.json === 'function' ? await error.json().catch(()=>({})) : {};
+      throw new Error(detail.detail || error.message || 'Jellyfin plugin request failed. Check the worker connection.');
+    }
+  }
   const response = await fetch('/forge/api/' + path, {credentials:'same-origin', ...options, headers:{'Content-Type':'application/json','X-Forge-Request':'1',...options.headers}});
   const result = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -22,9 +31,10 @@ function toast(message, error = false) {
   const el = $('#toast'); el.textContent = message; el.hidden = false; el.classList.toggle('danger',error);
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, error ? 12000 : 5500);
 }
-function showLogin() { signedIn = false; $('#details-dialog').close(); selected.clear(); $('#shell').hidden = true; $('#login-screen').hidden = false; }
+function showLogin() { signedIn = false; $('#details-dialog').close(); selected.clear(); $('#shell').hidden = true; $('#login-screen').hidden = !!pluginHost; if(pluginHost)pluginHost.expired(); }
 function showDashboard(name) {
   signedIn = true; $('#shell').hidden = false; $('#login-screen').hidden = true; $('#user-name').textContent = name;
+  if (pluginHost) { $('#logout').hidden = true; $('#jellyfin-link').href=pluginHost.home(); $('#jellyfin-link').target='_top'; navigate(); poll(); return; }
   $('#jellyfin-link').href = location.port === '5056' ? 'http://localhost:8096/web/' : '/web/';
   navigate(); poll();
 }

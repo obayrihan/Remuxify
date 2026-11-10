@@ -2,7 +2,7 @@
 
 Standalone Jellyfin administrator dashboard for NVDEC/NVENC video conversion, compatibility indexing, and validated replacement of media files.
 
-**This repository is the pre-plugin version-control baseline.** The dashboard and task still use the legacy Media Forge name and `/forge/` route. Native Jellyfin plugin integration and the complete Remuxify rename are planned in [the grouped checklist](TOMORROW_CHECKLIST.md); no plugin DLL is included yet.
+The standalone baseline is preserved on `main`. The `feature/jellyfin-plugin` branch adds a **development-preview native plugin**, with separate Jellyfin 10.11.8 and 12.4 builds and the existing Python worker. Read [the migration guide](docs/PLUGIN_MIGRATION.md) before testing or installing it. The current production deployment is unchanged; it still uses the legacy Media Forge task and `/forge/` route.
 
 ## Features
 
@@ -57,6 +57,16 @@ Enter qBittorrent credentials through Settings. They are encrypted using Windows
 This source snapshot excludes local configuration, environment files, virtual environments, credentials, media, logs, runtime databases, backups, staged deployment files, and operational receipts. Keep those exclusions in place. Git ignore rules do not erase files already committed or secrets from history.
 
 ## Tests
+
+For plugin builds and API-host tests:
+
+```powershell
+dotnet build plugin/Remuxify.Plugin/Remuxify.Plugin.csproj -c Release
+dotnet test plugin/Remuxify.Plugin.Tests/Remuxify.Plugin.Tests.csproj -c Release
+./build-plugin.ps1
+```
+
+Use the .NET SDK pinned by `global.json` and the .NET 9/ASP.NET Core 9 runtimes for the net9.0 test target. Preview ZIPs and checksums are generated locally under ignored `dist/`; building does not install or publish them.
 
 Tests generate disposable media and use temporary databases/directories. Some tests require Windows, actual FFmpeg binaries, and NVIDIA hardware. Do not run hardware integration tests against production media.
 

@@ -54,6 +54,15 @@ class Config:
         self.value = json.loads(self.path.read_text(encoding='utf-8-sig'))
         self.value.setdefault('video_decoder', 'auto')
         self.value.setdefault('force_transcode_during_playback', False)
+        self.value.setdefault('integration_mode', 'standalone')
+        if self.value['integration_mode'] not in ('standalone', 'plugin'):
+            raise ValueError('Unsupported Jellyfin integration mode')
+        if self.value['integration_mode'] == 'plugin':
+            from plugin_bridge import local_url, read_secret
+            bind_host = self.value['host']
+            local_url('http://' + ('[' + bind_host + ']' if ':' in bind_host else bind_host) + ':' + str(self.value['port']))
+            local_url(self.value['jellyfin_url'], allow_path=True)
+            read_secret(self.value)
 
     def get(self):
         with self.lock:
@@ -222,6 +231,8 @@ class Jellyfin:
         self.config = config
 
     def key(self):
+        if self.config.get()['integration_mode'] == 'plugin':
+            raise RuntimeError('Direct Jellyfin database credentials are disabled in plugin mode')
         path = Path(self.config.get()['jellyfin_data']) / 'data/jellyfin.db'
         # Read the existing server-side key; never copy it into source, URLs, or logs.
         with sqlite3.connect(f'file:{path.as_posix()}?mode=ro', uri=True, timeout=5) as db:
@@ -237,6 +248,9 @@ class Jellyfin:
                                 timeout=12, **kwargs)
 
     def roots(self):
+        if self.config.get()['integration_mode'] == 'plugin':
+            from plugin_bridge import NativeJellyfin
+            return NativeJellyfin(self.config).context()['roots']
         # Use the API first; on server startup an XML fallback keeps inventory available.
         try:
             r = self.request('GET', '/Library/VirtualFolders')
@@ -254,6 +268,9 @@ class Jellyfin:
             return roots
 
     def playback_paths(self):
+        if self.config.get()['integration_mode'] == 'plugin':
+            from plugin_bridge import NativeJellyfin
+            return [norm(path) for path in NativeJellyfin(self.config).context()['playbackPaths']]
         r = self.request('GET', '/Sessions')
         r.raise_for_status()
         paths = []
@@ -267,6 +284,9 @@ class Jellyfin:
         return paths
 
     def refresh(self):
+        if self.config.get()['integration_mode'] == 'plugin':
+            from plugin_bridge import NativeJellyfin
+            return NativeJellyfin(self.config).refresh()
         r = self.request('POST', '/Library/Refresh')
         r.raise_for_status()
 

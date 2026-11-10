@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <JellyfinVersion Condition="'$(TargetFramework)' == 'net9.0'">10.11.8</JellyfinVersion>
+    <JellyfinVersion Condition="'$(TargetFramework)' == 'net10.0'">12.4.0</JellyfinVersion>
+    <AspNetVersion Condition="'$(TargetFramework)' == 'net9.0'">9.0.0</AspNetVersion>
+    <AspNetVersion Condition="'$(TargetFramework)' == 'net10.0'">10.0.0</AspNetVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../Remuxify.Plugin/Remuxify.Plugin.csproj" />
+    <PackageReference Include="Jellyfin.Controller" Version="$(JellyfinVersion)" />
+    <PackageReference Include="Jellyfin.Model" Version="$(JellyfinVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="$(AspNetVersion)" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.1" PrivateAssets="all" />
+  </ItemGroup>
+</Project>
