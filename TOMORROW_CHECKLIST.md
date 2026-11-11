@@ -13,7 +13,7 @@ The standalone baseline is on `main`; the release candidate is being prepared on
 ## Immediate next steps — execution order
 
 1. **Complete:** prepare `release/standalone` from the standalone baseline, carrying over reviewed hostname-alias fixes and Remuxify display branding. The candidate has no mandatory plugin/pairing dependency; hardware-independent checks pass. See [the baseline review](docs/STANDALONE_BASELINE.md).
-2. Verify this build in an isolated installation with Jellyfin admin login, API-based library discovery, telemetry, settings, queue/history, and optional qBittorrent coordination. Do not use production media for conversion tests.
+2. **Complete:** validate a separate running standalone app and fresh Jellyfin 10.11.8 instance, including browser login, discovery, telemetry, settings/rules, history/logs, session checks, and a UI-started disposable conversion with mock torrent coordination. See [the isolated acceptance results](docs/STANDALONE_VALIDATION.md). The live server remains unchanged.
 3. Back up and safely return the existing worker to standalone mode while idle. Preserve the current data and credentials, disable the native-navigation marker, and replace the native plugin shortcut with the agreed optional standalone link. Verify standalone access before disabling/removing the installed connector. Do not upgrade or restart Jellyfin implicitly.
 4. Fix the installer so another Windows/NVIDIA host can install and start Remuxify without Cloudflare or this host's paths, hostname, ports, or account details.
 5. Complete disposable end-to-end safety and playback checks, documentation, naming/license decisions, and release packaging before publishing.
@@ -36,17 +36,20 @@ Discuss changes to authentication, library discovery, media replacement, presets
 
 - [x] Existing implementation uses full decoding, playable-frame checks, source fingerprints, durable hashes/receipts, and recoverable replacement to protect originals.
 - [x] Existing implementation retains verified output during file-lock or watched-source replacement waits.
-- [ ] Run a conversion on a disposable media copy through the standalone UI; verify FPS/ETA, phases, output playback, all retained audio tracks/surround, and replacement only after successful validation.
+- [x] Start a generated-media conversion through the standalone UI and verify completion, full decoding, matching video-frame counts, six-channel audio preservation, replacement receipt/hash, and completed history/logs.
+- [ ] Verify real-client output playback and representative long-file FPS/ETA/phase reporting. The two-second test does not establish long-running ETA accuracy.
 - [ ] Recheck incomplete downloads, changed sources/outputs, invalid or truncated output, low storage, CPU/GPU/disk headroom, cancellation, process failure, reboot, and interrupted commit.
 - [ ] Confirm that failed or ambiguous conversions retain the original and that completed outputs do not get automatically queued again.
 - [ ] Test playback on the originally affected iPhone/browser clients. Structural validation alone does not establish visual quality or client compatibility.
-- [ ] Verify overview, library discovery/removal/filtering, settings, rules, queue/history, logs, and telemetry together in a clean installation.
+- [x] Verify overview, watched files and added/removed Jellyfin roots, settings/rules, queue/history, logs and telemetry together in a fresh isolated installation.
+- [ ] Broaden filter, large-library, additional browser and clean packaged-install acceptance.
 - [ ] Document current restart limitations honestly: an interruption during validation may still require another encode. Enhanced retained-encode recovery is deferred below.
 
 ## 3. Authentication, configuration, and privacy — M
 
 - [ ] Agree the standalone Jellyfin connection setup. The legacy app discovers a background API key from Jellyfin's local database; review a portable, explicitly configured connection rather than treating the plugin bridge as a dependency. Consult the user before changing the authentication/discovery design.
-- [ ] Verify Jellyfin administrator login, viewer/anonymous rejection, privilege revocation, session expiry/logout, cookies, request-origin protection, and access checks on every data/action endpoint in the release build.
+- [x] Verify administrator login, viewer/anonymous rejection, privilege revocation, logout/cookie replay, and origin/request-header enforcement in the isolated running app; existing route-authorization regression checks also pass.
+- [ ] Complete HTTPS/proxy cookie, time-based session-expiry and wider external endpoint acceptance for the release configuration.
 - [ ] Verify that credentials and tokens never appear in browser responses, URLs, logs, examples, packaged files, or Git.
 - [x] Runtime configuration, databases, media, logs, encrypted credentials, backups, pairing files, and generated artifacts are excluded from the existing source checkout. Recheck the actual release contents and history before publication.
 - [ ] Test local credential permissions and the chosen service account. Explain that machine-DPAPI credentials must be re-entered on another host.
@@ -91,4 +94,4 @@ Release checks:
 
 ## Resume prompt
 
-**Release standalone Remuxify with no plugin dependency. Step one is complete on `release/standalone`; read `docs/STANDALONE_BASELINE.md`. Next validate a separate running installation and the complete UI flow, then plan an idle-only return of the live worker from plugin mode while preserving all settings, credentials, queue/history, and recovery data. Do not repeat the plugin cutover, automatically remove the installed connector before replacement access is verified, upgrade Jellyfin, retry media, or interrupt HandBrake. Keep the existing dashboard and conversion safeguards; consult the user before fundamental behavior changes.**
+**Release standalone Remuxify with no plugin dependency. Steps one and two are complete on `release/standalone`; read `docs/STANDALONE_BASELINE.md` and `docs/STANDALONE_VALIDATION.md`. Next prepare a reviewed, backed-up, idle-only return of the live worker from plugin mode while preserving all settings, credentials, queue/history, recovery data and public/private access. Do not repeat the plugin cutover, automatically remove the installed connector before replacement access is verified, upgrade Jellyfin, retry media, or interrupt HandBrake. Keep the existing dashboard and conversion safeguards; consult the user before fundamental behavior changes.**

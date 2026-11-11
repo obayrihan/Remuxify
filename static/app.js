@@ -22,10 +22,10 @@ function toast(message, error = false) {
   const el = $('#toast'); el.textContent = message; el.hidden = false; el.classList.toggle('danger',error);
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, error ? 12000 : 5500);
 }
-function showLogin() { signedIn = false; $('#details-dialog').close(); selected.clear(); $('#shell').hidden = true; $('#login-screen').hidden = false; }
+function showLogin() { signedIn = false; settingsLoaded = false; rulesLoaded = false; $('#details-dialog').close(); selected.clear(); $('#shell').hidden = true; $('#login-screen').hidden = false; }
 function showDashboard(name) {
   signedIn = true; $('#shell').hidden = false; $('#login-screen').hidden = true; $('#user-name').textContent = name;
-  $('#jellyfin-link').href = location.port === '5056' ? 'http://localhost:8096/web/' : '/web/';
+  $('#jellyfin-link').href = '/web/';
   navigate(); poll();
 }
 function navigate() {
@@ -42,6 +42,7 @@ function navigate() {
 
 function renderState(s) {
   state = s;
+  $('#jellyfin-link').href = s.jellyfin_web_url || '/web/';
   const c = s.counts, r = s.resources;
   for(const key of ['indexed','flagged','queued','completed']) $('#stat-'+key).textContent = c[key].toLocaleString();
   $('#nav-flagged').textContent = c.flagged; $('#nav-queued').textContent = c.queued;

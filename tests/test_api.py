@@ -81,6 +81,26 @@ class ApiTests(unittest.TestCase):
         for path in ('/Remuxify/Status', '/Remuxify/Api/state', '/Remuxify/Bridge/Context'):
             self.assertEqual(self.client.get(path).status_code, 404)
 
+    def test_jellyfin_link_uses_configured_local_port_and_base_path(self):
+        settings = dict(app.config.get(), jellyfin_url='http://localhost:8097/testing')
+        app.app.dependency_overrides[app.admin] = lambda: {'name': 'test-admin'}
+        try:
+            with patch.object(app.config, 'get', return_value=settings):
+                local = TestClient(app.app, base_url='http://127.0.0.1:5057')
+                self.assertEqual(local.get('/forge/api/state').json()['jellyfin_web_url'], 'http://localhost:8097/testing/web/')
+                self.assertEqual(self.client.get('/forge/api/state').json()['jellyfin_web_url'], '/web/')
+        finally:
+            app.app.dependency_overrides.clear()
+
+    def test_admin_bridge_accepts_only_the_configured_additional_origin(self):
+        settings = dict(app.config.get(), jellyfin_url='http://127.0.0.1:8097/testing')
+        user = Response({'Name': 'administrator', 'Policy': {'IsAdministrator': True}})
+        with patch.object(app.config, 'get', return_value=settings), patch.object(app.jellyfin, 'request', return_value=user):
+            accepted = self.client.post('/forge/auth/bridge', content='token=test-only', headers={'Origin': 'http://127.0.0.1:8097'}, follow_redirects=False)
+            rejected = self.client.post('/forge/auth/bridge', content='token=test-only', headers={'Origin': 'http://127.0.0.1:8098'}, follow_redirects=False)
+        self.assertEqual(accepted.status_code, 303)
+        self.assertEqual(rejected.status_code, 403)
+
     def test_torrent_settings_require_admin_for_writes(self):
         response = self.client.put('/forge/api/qbittorrent', json={'enabled':False,'port':8080},
                                    headers={'X-Forge-Request':'1'})

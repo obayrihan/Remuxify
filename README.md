@@ -4,6 +4,8 @@ Standalone Jellyfin administrator dashboard for NVDEC/NVENC video conversion, co
 
 **Release candidate preparation:** `release/standalone` contains the existing Python web app with no Jellyfin plugin, pairing file, or .NET dependency. The dashboard uses Remuxify branding. Existing task/data names, the `/forge/` route, and the health service identifier remain compatible with the working deployment. The candidate has not been deployed over the live plugin-mode worker. Follow [the release checklist](TOMORROW_CHECKLIST.md) and [the baseline review](docs/STANDALONE_BASELINE.md).
 
+The [isolated standalone acceptance report](docs/STANDALONE_VALIDATION.md) records the completed browser/API checks and generated-media conversion. It also distinguishes those results from the broader release checks still pending.
+
 ## Features
 
 - Discover configured media folders from Jellyfin's library API, with library XML configuration fallback. Media directories are not hardcoded. Recursive filesystem notifications and periodic reconciliation update the inventory.
@@ -68,6 +70,8 @@ Tests generate disposable media and use temporary databases/directories. Some te
 python -B -m unittest discover -s tests -p 'test_resources.py' -v
 python -B -m unittest discover -s tests -p 'test_playback*.py' -v
 python -B -m unittest discover -s tests -p 'test_restart_guard.py' -v
+# Optional frontend regression check when Node.js is available:
+node tests/test_ui_state.cjs
 # Full suite requires the Windows/NVIDIA environment described above:
 python -B -m unittest discover -s tests -v
 ```

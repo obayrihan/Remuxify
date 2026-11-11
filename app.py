@@ -80,6 +80,9 @@ def allowed_origin(origin, bridge=False):
     allowed = configured_public_origins() | {'http://127.0.0.1:5056', 'http://localhost:5056'}
     if bridge:
         allowed |= {'http://localhost:8096', 'http://127.0.0.1:8096'}
+        backend = urlparse(config.get()['jellyfin_url'])
+        if backend.scheme in ('http', 'https') and backend.netloc and not backend.username and not backend.password:
+            allowed.add(f'{backend.scheme}://{backend.netloc}')
     return origin in allowed
 
 
@@ -233,8 +236,13 @@ def me(session=Depends(admin)):
 
 
 @app.get('/forge/api/state')
-def state(_=Depends(admin)):
+def state(request: Request, _=Depends(admin)):
     c = config.get()
+    jellyfin_web_url = '/web/'
+    if request.url.hostname in ('localhost', '127.0.0.1', '::1'):
+        backend = urlparse(c['jellyfin_url'])
+        if backend.scheme in ('http', 'https') and backend.netloc and not backend.username and not backend.password:
+            jellyfin_web_url = f'{backend.scheme}://{backend.netloc}{backend.path.rstrip("/")}/web/'
     counts = {'indexed': 0, 'flagged': 0, 'unreadable': 0, 'completed': 0, 'queued': 0, 'failed': 0, 'bytes_saved': 0}
     for row in store.rows('SELECT info,error FROM media WHERE present=1'):
         counts['indexed'] += 1
@@ -251,7 +259,7 @@ def state(_=Depends(admin)):
     return {'counts': counts, 'inventory': inventory.status, 'resources': resources.value,
             'encoder': worker.encoder, 'roots': roots, 'queue_paused': c['queue_paused'], 'auto_queue': c['auto_queue'],
             'output': worker.options(), 'rules': c['rules'], 'current': worker.current,
-            'public_url': c['public_url'], 'now': time.time()}
+            'public_url': c['public_url'], 'jellyfin_web_url': jellyfin_web_url, 'now': time.time()}
 
 
 @app.get('/forge/api/media')
