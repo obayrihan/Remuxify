@@ -1,4 +1,4 @@
-"""Administrator-only local Media Forge API and dashboard."""
+"""Administrator-only local Remuxify API and dashboard."""
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -47,7 +47,7 @@ async def lifespan(_):
         thread = threading.Thread(target=target, name=name, daemon=True)
         threads.append(thread)
         thread.start()
-    store.event('Media Forge started; automatic encoding is ' + ('enabled' if config.get()['auto_queue'] else 'off'))
+    store.event('Remuxify started; automatic encoding is ' + ('enabled' if config.get()['auto_queue'] else 'off'))
     yield
     stop.set()
     inventory.wake.set()
@@ -55,7 +55,9 @@ async def lifespan(_):
         thread.join(timeout=20)
 
 
-app = FastAPI(title='Media Forge', docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app = FastAPI(title='Remuxify', docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+
+
 def configured_public_origins():
     settings = config.get()
     aliases = settings.get('public_aliases', [])
@@ -90,7 +92,7 @@ async def security(request: Request, call_next):
             return JSONResponse({'detail': 'Origin not allowed'}, status_code=403)
         if is_bridge:
             if not origin or not allowed_origin(origin, True):
-                return JSONResponse({'detail': 'Open Media Forge from Jellyfin'}, status_code=403)
+                return JSONResponse({'detail': 'Open Remuxify from Jellyfin'}, status_code=403)
         elif request.headers.get('x-forge-request') != '1':
             return JSONResponse({'detail': 'Missing request protection header'}, status_code=403)
         if int(request.headers.get('content-length', '0')) > 150_000:
@@ -161,6 +163,7 @@ def rate_limit(request):
 
 @app.get('/healthz')
 def health():
+    # Retain the service identifier expected by existing restart/health helpers.
     return {'ok': True, 'service': 'Media Forge'}
 
 
@@ -354,7 +357,7 @@ def job_log(job_id: str, _=Depends(admin)):
 
 @app.get('/forge/api/settings')
 def settings(_=Depends(admin)):
-    return {k: v for k, v in config.get().items() if k not in ('ffmpeg', 'ffprobe', 'jellyfin_data', 'host', 'port')}
+    return {k: v for k, v in config.get().items() if k not in ('ffmpeg', 'ffprobe', 'jellyfin_data', 'host', 'port', 'bridge_token_file')}
 
 
 @app.put('/forge/api/settings')

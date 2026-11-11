@@ -2,7 +2,7 @@
 
 Standalone Jellyfin administrator dashboard for NVDEC/NVENC video conversion, compatibility indexing, and validated replacement of media files.
 
-**This repository is the pre-plugin version-control baseline.** The dashboard and task still use the legacy Media Forge name and `/forge/` route. Native Jellyfin plugin integration and the complete Remuxify rename are planned in [the grouped checklist](TOMORROW_CHECKLIST.md); no plugin DLL is included yet.
+**Release candidate preparation:** `release/standalone` contains the existing Python web app with no Jellyfin plugin, pairing file, or .NET dependency. The dashboard uses Remuxify branding. Existing task/data names, the `/forge/` route, and the health service identifier remain compatible with the working deployment. The candidate has not been deployed over the live plugin-mode worker. Follow [the release checklist](TOMORROW_CHECKLIST.md) and [the baseline review](docs/STANDALONE_BASELINE.md).
 
 ## Features
 
@@ -17,7 +17,7 @@ Standalone Jellyfin administrator dashboard for NVDEC/NVENC video conversion, co
 
 ## Scope and limitations
 
-The current deployment integration targets Windows and NVIDIA hardware. Windows PDH supplies disk activity, DPAPI encrypts local qBittorrent credentials, and Task Scheduler supplies boot startup. Cross-platform support and plugin compatibility are not yet verified.
+The current deployment integration targets Windows and NVIDIA hardware. Windows PDH supplies disk activity, DPAPI encrypts local qBittorrent credentials, and Task Scheduler supplies boot startup. Cross-platform support is not yet verified.
 
 Conversion re-encodes the video and is lossy; it is more than container-only remuxing. The baseline preset is HEVC 8-bit, MP4/hvc1, P5, CQ 23, and a 20 Mbps video ceiling. Structural validation cannot prove equivalent visual quality. HDR/Dolby Vision, interlaced inputs, multiple timed video streams, and unsupported stream layouts are blocked. The current default is not an archival-quality 8K guarantee.
 
@@ -33,7 +33,9 @@ python -m venv .venv
 Copy-Item config.example.json config.json
 ```
 
-Edit the ignored `config.json` for your own Jellyfin URL/data directory, FFmpeg/FFprobe paths, and intended public URL. Values in the example are placeholders or conventional installation paths, not a description of any actual server. Jellyfin background requests currently use an existing server API key read from its local database in read-only mode; plugin migration will remove this dependency. Configure an API key in Jellyfin if none exists. Library roots come from Jellyfin and do not need to be listed in this file.
+Edit the ignored `config.json` for your own Jellyfin URL/data directory, FFmpeg/FFprobe paths, and intended public URL. Values in the example are placeholders or conventional installation paths, not a description of any actual server. Jellyfin background requests currently use an existing server API key read from its local database in read-only mode. Configure an API key in Jellyfin if none exists. A portable, explicitly configured connection is still a release decision; this step does not change authentication or discovery. Library roots come from Jellyfin and do not need to be listed in this file.
+
+Use a fresh example configuration for an isolated candidate test. This standalone build rejects plugin-mode configuration rather than silently falling back to a different authentication path. Do not copy it over a paired running worker; the live transition requires the separate backup and migration step in the checklist.
 
 ```powershell
 .\.venv\Scripts\python.exe run.py
@@ -43,7 +45,7 @@ Open `http://localhost:5056/forge/` and sign in as a Jellyfin administrator. Aut
 
 For an additional public hostname, add its exact origin to `public_aliases` in the ignored configuration, for example `["https://admin.example.com"]`, and restart the worker while idle. This extends the allowed hosts and request origins; administrator login and request protection remain required. Configure DNS, proxy routing, and any additional access gate separately. A hostname is not an authentication secret.
 
-The legacy `install.ps1` integrates a Jellyfin web-menu link, startup task, and optional Cloudflare path routing. It requires administrator access and explicit local `jellyfin_web`/`cloudflare_config` configuration. Review its staged changes before applying; it can restart the configured tunnel service. `-PythonExecutable` accepts the absolute interpreter path, and `-CloudflaredExecutable` accepts the tunnel program path. `start-local.ps1` and `restart-forge.ps1` also accept `-PythonExecutable`. These scripts are included for the standalone baseline; a portable plugin installer is still planned. No server or tunnel is required merely to inspect this source repository.
+The legacy `install.ps1` currently installs a Jellyfin web-menu link, startup task, and Cloudflare path routing together. It requires administrator access and explicit local `jellyfin_web`/`cloudflare_config` configuration. It is not yet a general-purpose standalone installer; separating optional integrations is a pending release task. Review its staged changes before applying; it can restart the configured tunnel service. `-PythonExecutable` accepts the absolute interpreter path, and `-CloudflaredExecutable` accepts the tunnel program path. `start-local.ps1` and `restart-forge.ps1` also accept `-PythonExecutable`. Running the app manually with `run.py` does not require Cloudflare, and no server or tunnel is required merely to inspect this source repository.
 
 ## Playback and queue behavior
 
@@ -74,6 +76,6 @@ For isolated test runs, copy the source and `config.example.json` into a tempora
 
 ## Next milestone
 
-See [TOMORROW_CHECKLIST.md](TOMORROW_CHECKLIST.md) for the workstreams ordered by estimated effort: native Jellyfin plugin, durable processing, portable installation, release verification, playback/torrent policies, optional quality presets, branding, and publication.
+See [TOMORROW_CHECKLIST.md](TOMORROW_CHECKLIST.md) for standalone release preparation, isolated acceptance, safe live transition, portable installation, release verification, and publication. The earlier plugin work remains parked on its own branch.
 
 Project licensing remains to be selected before an open-source release. This checkpoint does not add an open-source license or claim official Jellyfin affiliation.

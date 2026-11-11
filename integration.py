@@ -34,8 +34,8 @@ def plan():
     settings = Config().get()
     web_config = json.loads((WEB / 'config.json').read_text(encoding='utf-8-sig'))
     links = web_config.setdefault('menuLinks', [])
-    links[:] = [link for link in links if link.get('name') != 'Media Forge']
-    links.append({'name': 'Media Forge', 'icon': 'video_settings', 'url': '/web/forge.html'})
+    links[:] = [link for link in links if link.get('name') not in ('Media Forge', 'Remuxify')]
+    links.append({'name': 'Remuxify', 'icon': 'video_settings', 'url': '/web/forge.html'})
     staged_web = STAGING / 'jellyfin-web-config.json'
     staged_web.write_text(json.dumps(web_config, indent=2) + '\n', encoding='utf-8')
     tunnel = TUNNEL.read_text(encoding='utf-8-sig')
@@ -87,17 +87,17 @@ def ensure_menu():
     WEB, _ = configured_paths()
     # Also used at boot to restore the link if a Jellyfin update replaced its web files.
     web_config = json.loads((WEB / 'config.json').read_text(encoding='utf-8-sig'))
-    desired = {'name': 'Media Forge', 'icon': 'video_settings', 'url': '/web/forge.html'}
+    desired = {'name': 'Remuxify', 'icon': 'video_settings', 'url': '/web/forge.html'}
     links = web_config.setdefault('menuLinks', [])
     if desired not in links:
-        links[:] = [link for link in links if link.get('name') != 'Media Forge']
+        links[:] = [link for link in links if link.get('name') not in ('Media Forge', 'Remuxify')]
         links.append(desired)
         STAGING.mkdir(exist_ok=True)
         output = STAGING / 'jellyfin-web-config.json'
         output.write_text(json.dumps(web_config, indent=2) + '\n', encoding='utf-8')
         replace_with_backup(output, WEB / 'config.json')
     replace_with_backup(BASE / 'jellyfin-launcher.html', WEB / 'forge.html')
-    print('Jellyfin Media Forge link is installed.')
+    print('Jellyfin Remuxify link is installed.')
 
 
 if __name__ == '__main__':

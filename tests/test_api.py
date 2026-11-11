@@ -73,6 +73,14 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.headers['referrer-policy'],'no-referrer')
         self.assertIn("script-src 'self'",response.headers['content-security-policy'])
 
+    def test_standalone_page_branding_and_legacy_health_contract(self):
+        self.assertIn('<title>Remuxify', self.client.get('/forge/').text)
+        self.assertEqual(self.client.get('/healthz').json(), {'ok': True, 'service': 'Media Forge'})
+
+    def test_native_plugin_routes_are_not_part_of_the_standalone_app(self):
+        for path in ('/Remuxify/Status', '/Remuxify/Api/state', '/Remuxify/Bridge/Context'):
+            self.assertEqual(self.client.get(path).status_code, 404)
+
     def test_torrent_settings_require_admin_for_writes(self):
         response = self.client.put('/forge/api/qbittorrent', json={'enabled':False,'port':8080},
                                    headers={'X-Forge-Request':'1'})

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0d0f12"><title>Media Forge · Jellyfin</title>
+  <meta name="theme-color" content="#0d0f12"><title>Remuxify · Jellyfin</title>
   <link rel="icon" href="/forge/static/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
   <section id="login-screen" class="login-screen">
     <div class="login-card">
       <div class="brand-mark">F<span>↗</span></div><div class="eyebrow">JELLYFIN / ADMIN TOOLS</div>
-      <h1>Media Forge<span class="accent">.</span></h1><p class="muted">A better format. A smoother watch.</p>
+      <h1>Remuxify<span class="accent">.</span></h1><p class="muted">A better format. A smoother watch.</p>
       <div class="divider"></div><h2>Sign in to your server</h2><p class="small muted">Use your Jellyfin administrator account. Opening Forge from Jellyfin signs you in automatically.</p>
       <form id="login-form">
         <label>Username<input name="username" autocomplete="username" required autofocus></label>
@@ -23,7 +23,7 @@
   </section>
   <div id="shell" hidden>
     <aside class="sidebar">
-      <a href="#overview" class="brand"><span class="brand-mark compact">F<span>↗</span></span><span>Media Forge<span class="accent">.</span><small>JELLYFIN ADMIN</small></span></a>
+      <a href="#overview" class="brand"><span class="brand-mark compact">F<span>↗</span></span><span>Remuxify<span class="accent">.</span><small>JELLYFIN ADMIN</small></span></a>
       <div class="nav-label">WORKSPACE</div>
       <nav aria-label="Main navigation">
         <a href="#overview" data-page="overview"><span class="nav-icon">◫</span>Overview</a>
@@ -35,7 +35,7 @@
       <div class="sidebar-bottom"><div class="engine"><span class="dot" id="engine-dot"></span><span id="engine-label">Connecting</span></div><a id="jellyfin-link" href="http://localhost:8096/web/">↖ Back to Jellyfin</a><button id="logout" class="text-button">Sign out <span id="user-name"></span></button><small>LOCAL WORKER · NVENC HEVC</small></div>
     </aside>
     <div class="main-wrap">
-      <header class="topbar"><span class="breadcrumb">JELLYFIN <span>/</span> MEDIA FORGE <span>/</span> <b id="page-label">OVERVIEW</b></span><div class="top-actions"><span id="connection" class="badge good">● Live</span><button id="rescan" class="secondary small-button">↻ Scan libraries</button></div></header>
+      <header class="topbar"><span class="breadcrumb">JELLYFIN <span>/</span> REMUXIFY <span>/</span> <b id="page-label">OVERVIEW</b></span><div class="top-actions"><span id="connection" class="badge good">● Live</span><button id="rescan" class="secondary small-button">↻ Scan libraries</button></div></header>
       <main>
         <section id="overview" class="view">
           <div class="page-heading"><div><div class="eyebrow">YOUR LIBRARY, REFINED</div><h1>Keep playback smooth<span class="accent">.</span></h1><p class="muted">Find compatibility candidates. Convert with NVENC. Replace only after validation.</p></div><a href="#library" class="primary">Browse media <span>↗</span></a></div>
@@ -106,7 +106,7 @@
           </section>
           <section class="panel"><div class="panel-head"><h2>Watched Jellyfin folders</h2><span class="badge">DISCOVERED AUTOMATICALLY</span></div><div id="watched-folders"></div></section>
         </section>
-      </main><footer class="footer"><span>MEDIA FORGE / JELLYFIN</span><span>ENCODE → VALIDATE → REPLACE</span></footer>
+      </main><footer class="footer"><span>REMUXIFY / JELLYFIN</span><span>ENCODE → VALIDATE → REPLACE</span></footer>
     </div>
   </div>
   <dialog id="details-dialog"><div class="dialog-head"><h2>Media details</h2><button id="close-details" class="secondary small-button" aria-label="Close details">✕</button></div><div id="details-content"></div></dialog>

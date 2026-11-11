@@ -7,6 +7,11 @@
 *.dpapi.*.tmp
 *.pem
 *.key
+*.secret
+*.secret.*.tmp
+*.pairing.tmp
+.tools/
+.test-server/
 *.pfx
 *.p12
 

@@ -52,6 +52,8 @@ class Config:
         self.path = Path(path)
         self.lock = threading.RLock()
         self.value = json.loads(self.path.read_text(encoding='utf-8-sig'))
+        if self.value.get('integration_mode', 'standalone') != 'standalone':
+            raise ValueError('This standalone build requires standalone configuration; migrate plugin-mode settings before starting')
         self.value.setdefault('video_decoder', 'auto')
         self.value.setdefault('force_transcode_during_playback', False)
 

@@ -17,7 +17,7 @@ if os.name == 'nt':
     try:
         msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
     except OSError:
-        print('Media Forge is already running.', file=sys.stderr)
+        print('Remuxify is already running.', file=sys.stderr)
         sys.exit(0)
 
 from worker import retain_child_job
